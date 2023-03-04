@@ -1,2 +1,10 @@
 boto3>=1.26.29,<2.0.0
 stringcase>=1.2.0,<2.0.0
+/home/fraser/projects/pulumi/sdk/python/lib
+
+protobuf~=4.21
+grpcio==1.51.3
+dill~=0.3
+six~=1.12
+semver~=2.8
+pyyaml~=6.0

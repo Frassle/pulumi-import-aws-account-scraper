@@ -1,7 +1,8 @@
+import json
+from pprint import pprint
+
 import boto3
 import stringcase
-from pprint import pprint
-import json
 
 
 def generate_import_resources(
@@ -70,43 +71,47 @@ def get_ec2_instances():
     reservations = ec2_client.describe_instances()["Reservations"]
     return reservations[0]["Instances"] if reservations else []
 
-ec2_client = boto3.client('ec2')
-pulumi_import = {
-    "resources": []
-}
+def scrape():
+    ec2_client = boto3.client('ec2')
+    pulumi_import = {
+        "resources": []
+    }
 
-resource_types = [
-    'vpc',
-    'subnet',
-    'route_table',
-    'nat_gateway',
-    'internet_gateway',
-]
+    resource_types = [
+        'vpc',
+        'subnet',
+        'route_table',
+        'nat_gateway',
+        'internet_gateway',
+    ]
 
-for resource_type in resource_types:
-    pulumi_import['resources'] += import_ec2_resources(
-        resource_type, ec2_client)
+    for resource_type in resource_types:
+        pulumi_import['resources'] += import_ec2_resources(
+            resource_type, ec2_client)
 
-# These don't follow the pattern:
-pulumi_import['resources'] += import_route_table_associations(ec2_client)
+    # These don't follow the pattern:
+    pulumi_import['resources'] += import_route_table_associations(ec2_client)
 
-pulumi_import['resources'] += generate_import_resources(
-    lambda: ec2_client.describe_addresses()["Addresses"],
-    lambda resource: resource["AllocationId"],
-    "aws:ec2/eip:Eip",
-)
+    pulumi_import['resources'] += generate_import_resources(
+        lambda: ec2_client.describe_addresses()["Addresses"],
+        lambda resource: resource["AllocationId"],
+        "aws:ec2/eip:Eip",
+    )
 
-pulumi_import['resources'] += generate_import_resources(
-    lambda: get_ec2_instances(),
-    lambda resource: resource["InstanceId"],
-    "aws:ec2/instance:Instance",
-)
+    pulumi_import['resources'] += generate_import_resources(
+        lambda: get_ec2_instances(),
+        lambda resource: resource["InstanceId"],
+        "aws:ec2/instance:Instance",
+    )
 
-pulumi_import['resources'] += generate_import_resources(
-    lambda: ec2_client.describe_security_groups()["SecurityGroups"],
-    lambda resource: resource["GroupId"],
-    "aws:ec2/securityGroup:SecurityGroup",
-)
+    pulumi_import['resources'] += generate_import_resources(
+        lambda: ec2_client.describe_security_groups()["SecurityGroups"],
+        lambda resource: resource["GroupId"],
+        "aws:ec2/securityGroup:SecurityGroup",
+    )
 
+    return pulumi_import
 
-print(json.dumps(pulumi_import, indent=2))
+if __name__ == "__main__":
+    pulumi_import = scrape()
+    print(json.dumps(pulumi_import, indent=2))
